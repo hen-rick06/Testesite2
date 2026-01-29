@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>TikMemes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Feed */
+#feed {
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+}
+
+/* Post */
+.post {
+  height: 100vh;
+  position: relative;
+  scroll-snap-align: start;
+}
+
+.post video,
+.post img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Info do post */
+.post-info {
+  position: absolute;
+  bottom: 140px;
+  left: 15px;
+  max-width: 80%;
+  text-shadow: 2px 2px 6px #000;
+}
+
+/* Área de comentários */
+.comments {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0,0,0,0.7);
+  padding: 10px;
+}
+
+.comments-list {
+  max-height: 80px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.comment {
+  margin-bottom: 5px;
+}
+
+/* Campo de comentar */
+.comment-form {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.comment-form input {
+  flex: 1;
+  padding: 6px;
+  border-radius: 5px;
+  border: none;
+}
+
+.comment-form button {
+  padding: 6px 10px;
+  border: none;
+  background: #ff0050;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="feed"></div>
+
+<!-- Firebase -->
+<script type="module">
+/* 🔥 IMPORTANTE 🔥
+   Substitua pelas SUAS credenciais do Firebase
+*/
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  orderBy,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_DOMINIO.firebaseapp.com",
+  projectId: "SEU_PROJECT_ID",
+  storageBucket: "SEU_BUCKET.appspot.com",
+  messagingSenderId: "SEU_ID",
+  appId: "SEU_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const feed = document.getElementById("feed");
+
+/* 🔽 Carregar posts */
+async function carregarPosts() {
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  const snapshot = await getDocs(q);
+
+  snapshot.forEach(doc => {
+    const post = doc.data();
+    criarPost(doc.id, post);
+  });
+}
+
+function criarPost(postId, post) {
+  const div = document.createElement("div");
+  div.className = "post";
+
+  const media =
+    post.type === "video"
+      ? `<video src="${post.src}" autoplay muted loop></video>`
+      : `<img src="${post.src}">`;
+
+  div.innerHTML = `
+    ${media}
+    <div class="post-info">${post.desc}</div>
+
+    <div class="comments">
+      <div class="comments-list" id="comments-${postId}"></div>
+      <div class="comment-form">
+        <input placeholder="Comentar..." id="input-${postId}">
+        <button onclick="comentar('${postId}')">Enviar</button>
+      </div>
+    </div>
+  `;
+
+  feed.appendChild(div);
+  carregarComentarios(postId);
+}
+
+/* 🔽 Comentários */
+async function carregarComentarios(postId) {
+  const commentsRef = collection(db, "posts", postId, "comments");
+  const snapshot = await getDocs(commentsRef);
+
+  const list = document.getElementById(`comments-${postId}`);
+  list.innerHTML = "";
+
+  snapshot.forEach(doc => {
+    const c = doc.data();
+    const div = document.createElement("div");
+    div.className = "comment";
+    div.textContent = c.text;
+    list.appendChild(div);
+  });
+}
+
+window.comentar = async function(postId) {
+  const input = document.getElementById(`input-${postId}`);
+  if (!input.value.trim()) return;
+
+  await addDoc(collection(db, "posts", postId, "comments"), {
+    text: input.value,
+    createdAt: serverTimestamp()
+  });
+
+  input.value = "";
+  carregarComentarios(postId);
+};
+
+carregarPosts();
+</script>
+
+</body>
+</html>
