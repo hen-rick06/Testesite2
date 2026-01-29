@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Snake Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* { box-sizing: border-box; font-family: Arial, sans-serif; }
+
+body {
+  margin: 0;
+  background: #0f172a;
+  color: #e5e7eb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.hidden { display: none; }
+
+button {
+  background: #22c55e;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 8px;
+  color: #022c22;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #16a34a;
+}
+
+#lobby {
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 6px;
+}
+
+#personalizar {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: #334155;
+  color: white;
+}
+
+#game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#grid {
+  display: grid;
+  background: #020617;
+}
+
+.cell {
+  width: 12px;
+  height: 12px;
+}
+
+.snake {
+  background: var(--snake-color);
+}
+
+.apple {
+  background: red;
+}
+
+#score {
+  margin: 10px;
+}
+
+#gameOver {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#gameOverBox {
+  background: #020617;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  width: 300px;
+}
+
+#skins button {
+  margin: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOBBY -->
+<div id="lobby">
+  <h1>🐍 Snake Game</h1>
+
+  <select id="difficulty">
+    <option value="easy">Fácil</option>
+    <option value="medium">Médio</option>
+    <option value="hard">Difícil</option>
+  </select>
+
+  <select id="apples">
+    <option value="1">1 Maçã</option>
+    <option value="2">2 Maçãs</option>
+    <option value="3">3 Maçãs</option>
+  </select>
+
+  <button onclick="startGame()">▶ Começar Partida</button>
+
+  <button id="personalizar" onclick="toggleSkins()">🎨 Personalizar</button>
+
+  <div id="skins" class="hidden">
+    <h3>Skins</h3>
+    <button onclick="setSkin('#22c55e')">🐍 Verde</button>
+    <button onclick="setSkin('#3b82f6')">😎 Azul</button>
+    <button onclick="setSkin('#f97316')">🔥 Laranja</button>
+  </div>
+</div>
+
+<!-- JOGO -->
+<div id="game" class="hidden">
+  <div id="score">Pontuação: 0</div>
+  <div id="grid"></div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameOver" class="hidden">
+  <div id="gameOverBox">
+    <h2>💀 Game Over</h2>
+    <p id="finalScore"></p>
+    <p id="bestScore"></p>
+    <button onclick="restart()">Recomeçar</button><br><br>
+    <button onclick="backToLobby()">Voltar para o lobby</button>
+  </div>
+</div>
+
+<script>
+let grid, size, speed;
+let snake, direction, apples, score, interval;
+let snakeColor = localStorage.getItem("snakeSkin") || "#22c55e";
+
+document.documentElement.style.setProperty('--snake-color', snakeColor);
+
+function toggleSkins() {
+  document.getElementById("skins").classList.toggle("hidden");
+}
+
+function setSkin(color) {
+  snakeColor = color;
+  localStorage.setItem("snakeSkin", color);
+  document.documentElement.style.setProperty('--snake-color', color);
+}
+
+function startGame() {
+  const diff = difficulty.value;
+  const appleCount = parseInt(apples.value);
+
+  if (diff === "easy") { size = 15; speed = 200 / 0.75; }
+  if (diff === "medium") { size = 30; speed = 200; }
+  if (diff === "hard") { size = 60; speed = 200 / 1.75; }
+
+  lobby.classList.add("hidden");
+  game.classList.remove("hidden");
+
+  initGame(appleCount);
+}
+
+function initGame(appleCount) {
+  grid = [];
+  snake = [{x: Math.floor(size/2), y: Math.floor(size/2)}];
+  direction = {x: 1, y: 0};
+  apples = [];
+  score = 0;
+  scoreEl.innerText = "Pontuação: 0";
+
+  gridEl.innerHTML = "";
+  gridEl.style.gridTemplateColumns = `repeat(${size}, 12px)`;
+
+  for (let i = 0; i < size * size; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    gridEl.appendChild(cell);
+    grid.push(cell);
+  }
+
+  for (let i = 0; i < appleCount; i++) spawnApple();
+
+  clearInterval(interval);
+  interval = setInterval(update, speed);
+}
+
+function spawnApple() {
+  let pos;
+  do {
+    pos = {
+      x: Math.floor(Math.random() * size),
+      y: Math.floor(Math.random() * size)
+    };
+  } while (snake.some(s => s.x === pos.x && s.y === pos.y));
+
+  apples.push(pos);
+}
+
+function update() {
+  const head = {
+    x: snake[0].x + direction.x,
+    y: snake[0].y + direction.y
+  };
+
+  if (
+    head.x < 0 || head.y < 0 ||
+    head.x >= size || head.y >= size ||
+    snake.some(s => s.x === head.x && s.y === head.y)
+  ) {
+    return endGame();
+  }
+
+  snake.unshift(head);
+
+  let ateApple = false;
+  apples.forEach((a, i) => {
+    if (a.x === head.x && a.y === head.y) {
+      apples.splice(i, 1);
+      spawnApple();
+      score += 5;
+      scoreEl.innerText = "Pontuação: " + score;
+      ateApple = true;
+    }
+  });
+
+  if (!ateApple) snake.pop();
+
+  render();
+}
+
+function render() {
+  grid.forEach(c => c.className = "cell");
+
+  snake.forEach(s => {
+    grid[s.y * size + s.x].classList.add("snake");
+  });
+
+  apples.forEach(a => {
+    grid[a.y * size + a.x].classList.add("apple");
+  });
+}
+
+function endGame() {
+  clearInterval(interval);
+  gameOver.classList.remove("hidden");
+
+  const best = Math.max(score, localStorage.getItem("bestScore") || 0);
+  localStorage.setItem("bestScore", best);
+
+  finalScore.innerText = "Pontuação: " + score;
+  bestScore.innerText = "Maior Pontuação: " + best;
+}
+
+function restart() {
+  gameOver.classList.add("hidden");
+  startGame();
+}
+
+function backToLobby() {
+  gameOver.classList.add("hidden");
+  game.classList.add("hidden");
+  lobby.classList.remove("hidden");
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp" && direction.y !== 1) direction = {x:0,y:-1};
+  if (e.key === "ArrowDown" && direction.y !== -1) direction = {x:0,y:1};
+  if (e.key === "ArrowLeft" && direction.x !== 1) direction = {x:-1,y:0};
+  if (e.key === "ArrowRight" && direction.x !== -1) direction = {x:1,y:0};
+});
+
+const gridEl = document.getElementById("grid");
+const scoreEl = document.getElementById("score");
+</script>
+
+</body>
+  </html>
