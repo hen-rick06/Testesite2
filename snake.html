@@ -173,7 +173,7 @@ function setSkin(color) {
 
 function startGame() {
   const diff = difficulty.value;
-  const appleCount = parseInt(apples.value);
+  const appleCount = parseInt(applesSelect.value);
 
   if (diff === "easy") { size = 15; speed = 200 / 0.75; }
   if (diff === "medium") { size = 30; speed = 200; }
@@ -300,3 +300,21 @@ const scoreEl = document.getElementById("score");
 
 </body>
   </html>
+
+<script>
+/* ===== ELEMENTOS DO DOM ===== */
+const lobby = document.getElementById("lobby");
+const game = document.getElementById("game");
+const gameOver = document.getElementById("gameOver");
+
+const difficulty = document.getElementById("difficulty");
+const applesSelect = document.getElementById("apples");
+
+const finalScore = document.getElementById("finalScore");
+const bestScore = document.getElementById("bestScore");
+
+const gridEl = document.getElementById("grid");
+const scoreEl = document.getElementById("score");
+</script>
+
+
