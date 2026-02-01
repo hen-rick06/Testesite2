@@ -36,16 +36,27 @@ body {
 
 /* Cabeçalho */
 .post-header {
-  padding: 10px;
+  padding: 10px 12px;
   display: flex;
   justify-content: space-between;
   font-size: 14px;
+  color: #cbd5f5;
 }
 
-/* Legenda */
+/* MOLDURA PADRÃO (estilo Facebook) */
+.post-frame {
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  margin: 10px;
+  overflow: hidden;
+}
+
+/* Título / legenda */
 .post-caption {
-  padding: 10px;
+  padding: 12px;
   font-size: 16px;
+  border-bottom: 1px solid #1f2937;
 }
 
 /* Mídia */
@@ -64,6 +75,7 @@ body {
   border-top: 1px solid #1f2937;
 }
 
+/* Botões */
 .post-actions button {
   background: none;
   border: none;
@@ -82,10 +94,13 @@ body {
   stroke: white;
   fill: none;
   stroke-width: 2;
+  transition: fill 0.2s;
 }
 
-.post-actions button:hover .like-icon {
-  stroke: #22c55e;
+/* Curtido */
+button.liked .like-icon {
+  fill: #22c55e;
+  stroke: white;
 }
 </style>
 </head>
@@ -102,40 +117,54 @@ body {
       <span>agora</span>
     </div>
 
-    <div class="post-caption">
-      Meme "Não Sei" 🤣<br>
-      Veja:
+    <!-- MOLDURA DO POST -->
+    <div class="post-frame">
+
+      <div class="post-caption">
+        Meme "Não Sei" 🤣<br>
+        Veja:
+      </div>
+
+      <video
+        src="media/bebado nÃo sei(360P).mp4"
+        class="post-media"
+        autoplay
+        muted
+        loop
+        playsinline>
+      </video>
+
+      <div class="post-actions">
+
+        <!-- CURTIR -->
+        <button class="like-btn">
+          <svg class="like-icon" viewBox="0 0 24 24">
+            <path d="M20.8 4.6c-1.8-1.7-4.6-1.7-6.4 0L12 7l-2.4-2.4c-1.8-1.7-4.6-1.7-6.4 0-2 1.9-2 5 0 6.9L12 21l8.8-9.5c2-1.9 2-5 0-6.9z"/>
+          </svg>
+          Curtir
+        </button>
+
+        <button>Comentários</button>
+        <button>Compartilhar</button>
+
+      </div>
+
     </div>
-
-    <video
-      src="media/bebado nÃo sei(360P).mp4"
-      class="post-media"
-      autoplay
-      muted
-      loop
-      playsinline>
-    </video>
-
-    <div class="post-actions">
-
-      <!-- CURTIR -->
-      <button>
-        <svg class="like-icon" viewBox="0 0 24 24">
-          <path d="M20.8 4.6c-1.8-1.7-4.6-1.7-6.4 0L12 7l-2.4-2.4c-1.8-1.7-4.6-1.7-6.4 0-2 1.9-2 5 0 6.9L12 21l8.8-9.5c2-1.9 2-5 0-6.9z"/>
-        </svg>
-        Curtir
-      </button>
-
-      <button>💬 Comentar</button>
-      <button>🔁 Compartilhar</button>
-    </div>
+    <!-- FIM DA MOLDURA -->
 
   </div>
 
 </div>
 
-<!-- JS: clicar no vídeo liga/desliga som -->
 <script>
+/* Curtir */
+document.querySelectorAll(".like-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    btn.classList.toggle("liked");
+  });
+});
+
+/* Vídeo: ligar/desligar som */
 document.querySelectorAll("video").forEach(video => {
   video.addEventListener("click", () => {
     video.muted = !video.muted;
