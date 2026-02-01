@@ -53,7 +53,7 @@ h1 {
   gap:14px;
   justify-content:center;
   align-items:center;
-  perspective: 1000px;
+  perspective:1000px;
 }
 
 /* ===== CARTA ===== */
@@ -61,6 +61,16 @@ h1 {
   width:90px;
   height:130px;
   cursor:pointer;
+  opacity:0;
+  transform:scale(0.6) rotateY(180deg);
+  animation: shuffleIn 0.6s ease forwards;
+}
+
+@keyframes shuffleIn {
+  to {
+    opacity:1;
+    transform:scale(1) rotateY(0deg);
+  }
 }
 
 .card-inner {
@@ -88,10 +98,10 @@ h1 {
   justify-content:center;
   font-weight:bold;
   box-shadow:0 8px 15px rgba(0,0,0,0.4);
-  border:3px solid #d4af37; /* dourado */
+  border:3px solid #d4af37;
 }
 
-/* Frente (verso da carta) */
+/* Frente */
 .card-front {
   background:linear-gradient(145deg, #1e293b, #0f172a);
   color:#d4af37;
@@ -99,7 +109,7 @@ h1 {
   letter-spacing:1px;
 }
 
-/* Verso (imagem) */
+/* Verso */
 .card-back {
   transform: rotateY(180deg);
   background:#22c55e;
@@ -227,13 +237,16 @@ function createCards(){
   }
   values.sort(()=>Math.random()-0.5);
 
-  let cols = Math.sqrt(values.length);
+  /* 🔧 CORREÇÃO DEFINITIVA DAS COLUNAS */
+  let cols = Math.ceil(Math.sqrt(values.length));
   grid.style.gridTemplateColumns = `repeat(${cols}, 90px)`;
 
-  values.forEach(value=>{
+  values.forEach((value, index)=>{
     const card = document.createElement("div");
     card.className = "card";
     card.dataset.value = value;
+    card.style.animationDelay = `${index * 40}ms`;
+
     card.innerHTML = `
       <div class="card-inner">
         <div class="card-front">MEMEHD8K</div>
